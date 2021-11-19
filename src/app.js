@@ -13,9 +13,9 @@ exports.app = (nameFile) => {
   const automata = getInitialAutomata(file)
   console.log('AUTOMATA'.rainbow, automata)
   //Extendended DFA Here
-  getDFA(automata)
+  const dictionary = getDFA(automata)
 
-
+  console.log('Dictionary'.blue, dictionary)
   /**
    * Since here starts the methods
   */
@@ -29,17 +29,27 @@ exports.app = (nameFile) => {
   */
   function getDFA(automataNDFA) {
     const queue = getQueue(automataNDFA)
+    console.log('QUEUE'.blue, queue)
     const automataDFA = {}
     while (queue.length > 0) {
       const next = queue.pop()
       for (const element of next) {
         const statesA = getTransitionFunction(element, "a")
+        console.log('NUEVO_A', statesA, 'ELEMENTO', element)
         const statesB = getTransitionFunction(element, "b")
-        const states = union(statesA, statesB)
-        automataDFA[next] = states
+        console.log('NUEVO_B', statesB, 'ELEMENTO', element)
+        const unionStates = union(statesA, statesB)
+        console.log('UNION_A_B'.red, unionStates, 'ELEMENTO', `${element}`.red)
+
+        if (automataDFA[next]) {
+          automataDFA[next].push(unionStates)
+        } else {
+
+          automataDFA[next] = [unionStates]
+        }
       }
     }
-    console.log(automataDFA)
+    //console.log(automataDFA)
     return automataDFA
   }
 
@@ -52,35 +62,35 @@ exports.app = (nameFile) => {
     queue.push(statesA)
     queue.push(statesB)
 
-    for (const stateA of statesA) {
-      const newStateA = getTransitionFunction(stateA, 'a')
-      if (newStateA) {
-        if (!queue.some(v => v.toString() === newStateA.toString())) {
-          queue.push(newStateA)
-        }
-      }
-      const newStateB = getTransitionFunction(stateA, 'b')
-      if (newStateB) {
-        if (!(queue.some(v => v.toString() === newStateB.toString()))) {
-          queue.push(newStateB)
-        }
-      }
-    }
+    // for (const stateA of statesA) {
+    //   const newStateA = getTransitionFunction(stateA, 'a')
+    //   if (newStateA) {
+    //     if (!queue.some(v => v.toString() === newStateA.toString())) {
+    //       queue.push(newStateA)
+    //     }
+    //   }
+    //   const newStateB = getTransitionFunction(stateA, 'b')
+    //   if (newStateB) {
+    //     if (!(queue.some(v => v.toString() === newStateB.toString()))) {
+    //       queue.push(newStateB)
+    //     }
+    //   }
+    // }
 
-    for (const stateB of statesB) {
-      const newStateA = getTransitionFunction(stateB, 'a')
-      if (newStateA) {
-        if (!queue.some(v => v.toString() === newStateA.toString())) {
-          queue.push(newStateA)
-        }
-      }
-      const newStateB = getTransitionFunction(stateB, 'b')
-      if (newStateB) {
-        if (!(queue.some(v => v === newStateB.toString()))) {
-          queue.push(newStateB)
-        }
-      }
-    }
+    // for (const stateB of statesB) {
+    //   const newStateA = getTransitionFunction(stateB, 'a')
+    //   if (newStateA) {
+    //     if (!queue.some(v => v.toString() === newStateA.toString())) {
+    //       queue.push(newStateA)
+    //     }
+    //   }
+    //   const newStateB = getTransitionFunction(stateB, 'b')
+    //   if (newStateB) {
+    //     if (!(queue.some(v => v === newStateB.toString()))) {
+    //       queue.push(newStateB)
+    //     }
+    //   }
+    // }
     return queue
   }
   /**
@@ -94,7 +104,13 @@ exports.app = (nameFile) => {
    */
   function union(statesA = [], statesB = []) {
 
-    return [...statesA || [], ...statesB || []]
+    const temp = [...statesA || [], ...statesB || []]
+
+    const union = temp.filter((c, index) => {
+      return temp.indexOf(c) === index;
+    });
+
+    return union
   }
 
   /**
