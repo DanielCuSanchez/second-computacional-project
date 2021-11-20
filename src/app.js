@@ -7,15 +7,16 @@ const path = require('path')
     * @desc This is the init app function
     * @version 1.0.0
 */
-exports.app = (nameFile) => {
+exports.app = async (nameFile) => {
   //With this works the app
   const file = openFile(nameFile)
   const automata = getInitialAutomata(file)
   console.log('AUTOMATA'.rainbow, automata)
   //Extendended DFA Here
-  const dictionary = getDFA(automata)
+  let queue = [...getQueue(automata)]
+  await getDFA([...queue])
 
-  console.log('Dictionary'.blue, dictionary)
+
   /**
    * Since here starts the methods
   */
@@ -27,31 +28,75 @@ exports.app = (nameFile) => {
   * @param {automataNDFA} file file already opened
   * @returns {automataDFA} automata DFA
   */
-  function getDFA(automataNDFA) {
-    const queue = getQueue(automataNDFA)
-    console.log('QUEUE'.blue, queue)
+  async function getDFA(queue) {
+
+    console.log('INITIAL_QUEUE'.blue, queue)
+    //Temp variables to check the states
+    const statesAnalized = []
+    const newStatesToAnalize = []
+    // AutomataDFA
     const automataDFA = {}
+
     while (queue.length > 0) {
       const next = queue.pop()
+      statesAnalized.push(next)
+
       for (const element of next) {
         const statesA = getTransitionFunction(element, "a")
-        console.log('NUEVO_A', statesA, 'ELEMENTO', element)
+        console.log('NUEVO_A'.yellow, statesA, 'ELEMENTO', element)
+
         const statesB = getTransitionFunction(element, "b")
-        console.log('NUEVO_B', statesB, 'ELEMENTO', element)
+        console.log('NUEVO_B'.yellow, statesB, 'ELEMENTO', element)
+
+        if (!automataDFA[next]) {
+          automataDFA[next] = {
+            "a": [...statesA || []],
+            "b": [...statesB || []]
+          }
+        } else if (automataDFA[next]['a'] && automataDFA[next]['b']) {
+          automataDFA[next] = {
+            "a": [...new Set([...automataDFA[next]['a'], ...statesB || []])],
+            "b": [...new Set([...automataDFA[next]['b'], ...statesB || []])]
+          }
+        }
         const unionStates = union(statesA, statesB)
         console.log('UNION_A_B'.red, unionStates, 'ELEMENTO', `${element}`.red)
-
-        if (automataDFA[next]) {
-          automataDFA[next].push(unionStates)
-        } else {
-
-          automataDFA[next] = [unionStates]
-        }
+        newStatesToAnalize.push(unionStates)
       }
     }
-    //console.log(automataDFA)
-    return automataDFA
+
+    let filterToAnalize = filterArray(newStatesToAnalize)
+    const exist = existsNewStates(statesAnalized, filterToAnalize)
+    console.log('Dictionary'.blue, automataDFA)
+    if (exist) {
+      getDFA([...filterToAnalize])
+    }
+    else {
+      return
+    }
   }
+
+  function existsNewStates(statesAnalized = [], newStatesToAnalize = []) {
+    let decision = false
+    for (const newState of newStatesToAnalize) {
+      if (!(statesAnalized.some(sA => {
+        return sA.toString() === newState.toString()
+      }))) {
+        decision = true
+      }
+    }
+    return decision
+  }
+
+  function filterArray(arr) {
+    const temp = arr.map(e => e.toString())
+    const temp2 = temp.filter((e, index) => {
+      return temp.indexOf(e) === index
+    })
+    const statesFiltered = temp2.map(e => e.split(","))
+    return statesFiltered
+  }
+
 
   function getQueue(automataNDFA) {
     const initalState = automataNDFA.initialState[0]
@@ -61,36 +106,6 @@ exports.app = (nameFile) => {
     queue.push([initalState])
     queue.push(statesA)
     queue.push(statesB)
-
-    // for (const stateA of statesA) {
-    //   const newStateA = getTransitionFunction(stateA, 'a')
-    //   if (newStateA) {
-    //     if (!queue.some(v => v.toString() === newStateA.toString())) {
-    //       queue.push(newStateA)
-    //     }
-    //   }
-    //   const newStateB = getTransitionFunction(stateA, 'b')
-    //   if (newStateB) {
-    //     if (!(queue.some(v => v.toString() === newStateB.toString()))) {
-    //       queue.push(newStateB)
-    //     }
-    //   }
-    // }
-
-    // for (const stateB of statesB) {
-    //   const newStateA = getTransitionFunction(stateB, 'a')
-    //   if (newStateA) {
-    //     if (!queue.some(v => v.toString() === newStateA.toString())) {
-    //       queue.push(newStateA)
-    //     }
-    //   }
-    //   const newStateB = getTransitionFunction(stateB, 'b')
-    //   if (newStateB) {
-    //     if (!(queue.some(v => v === newStateB.toString()))) {
-    //       queue.push(newStateB)
-    //     }
-    //   }
-    // }
     return queue
   }
   /**
@@ -209,7 +224,7 @@ exports.app = (nameFile) => {
   * @desc This function generates initial automota from the file
   * @version 1.0.0
   * @param {text} file file already opened
- */
+  */
   function saveFile(data) {
     console.log(data)
     try {
