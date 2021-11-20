@@ -1,7 +1,6 @@
 require('colors')
 const fs = require('fs')
 const path = require('path')
-
 /**
     * @function
     * @desc This is the init app function
@@ -11,24 +10,25 @@ exports.app = async (nameFile) => {
   //With this works the app
   const file = openFile(nameFile)
   const automata = getInitialAutomata(file)
-  console.log('AUTOMATA'.rainbow, automata)
-  //Extendended DFA Here
+  console.log('AUTOMATA'.bgRed, automata)
+  //Get DFA
   let queue = [...getQueue(automata)]
-  await getDFA([...queue])
+  //This function inits the process to get DFA
+  getDFA([...queue])
 
 
   /**
-   * Since here starts the methods
+   * Since here starts the methods for the app
   */
 
   /**
   * @method getDFA
   * @desc This function generates the dfa automata
   * @version 1.0.0
-  * @param {automataNDFA} file file already opened
-  * @returns {automataDFA} automata DFA
+  * @param { Array } queue  The inital queue from initial state from the file
+  * @returns { automataDFA } DFA created
   */
-  async function getDFA(queue) {
+  function getDFA(queue) {
 
     console.log('INITIAL_QUEUE'.blue, queue)
     //Temp variables to check the states
@@ -43,10 +43,10 @@ exports.app = async (nameFile) => {
 
       for (const element of next) {
         const statesA = getTransitionFunction(element, "a")
-        console.log('NUEVO_A'.yellow, statesA, 'ELEMENTO', element)
+        console.log('CURRENT_ELEMENT'.yellow, element, 'WITH_A'.yellow, statesA,)
 
         const statesB = getTransitionFunction(element, "b")
-        console.log('NUEVO_B'.yellow, statesB, 'ELEMENTO', element)
+        console.log('CURRENT_ELEMENT'.yellow, element, 'WITH_B'.yellow, statesB,)
 
         if (!automataDFA[next]) {
           automataDFA[next] = {
@@ -55,26 +55,34 @@ exports.app = async (nameFile) => {
           }
         } else if (automataDFA[next]['a'] && automataDFA[next]['b']) {
           automataDFA[next] = {
-            "a": [...new Set([...automataDFA[next]['a'], ...statesB || []])],
+            "a": [...new Set([...automataDFA[next]['a'], ...statesA || []])],
             "b": [...new Set([...automataDFA[next]['b'], ...statesB || []])]
           }
         }
         const unionStates = union(statesA, statesB)
-        console.log('UNION_A_B'.red, unionStates, 'ELEMENTO', `${element}`.red)
+        console.log('CURRENT_ELEMENT'.red, element, 'UNION_AB'.red, unionStates)
         newStatesToAnalize.push(unionStates)
       }
     }
 
     let filterToAnalize = filterArray(newStatesToAnalize)
     const exist = existsNewStates(statesAnalized, filterToAnalize)
-    console.log('Dictionary'.blue, automataDFA)
-    if (exist) {
-      getDFA([...filterToAnalize])
+    console.log('DICTIONARY'.blue, automataDFA)
+    if (!exist) {
+      return automataDFA
     }
-    else {
-      return
-    }
+    getDFA([...filterToAnalize, ...statesAnalized])
+
   }
+
+  /**
+   * @method existsNewStates
+   * @desc This function avoids duplicated elements at current array param
+   * @version 1.0.0
+   * @param { Array } statesAnalized These states are the states that we have already calculated
+   * @param { Array } newStatesToAnalize The new states based on the unions that we generated
+   * @returns { Boolean } Returns true or false based on the comparision if new states are present
+ */
 
   function existsNewStates(statesAnalized = [], newStatesToAnalize = []) {
     let decision = false
@@ -86,8 +94,15 @@ exports.app = async (nameFile) => {
       }
     }
     return decision
-  }
+  }//a,b,c     //a,b,c,d
 
+  /**
+   * @method filterArray
+   * @desc This function avoids duplicated elements at current array param
+   * @version 1.0.0
+   * @param { Array } arr current array that you want to filter
+   * @returns { Array } The current array filtered
+ */
   function filterArray(arr) {
     const temp = arr.map(e => e.toString())
     const temp2 = temp.filter((e, index) => {
@@ -96,26 +111,30 @@ exports.app = async (nameFile) => {
     const statesFiltered = temp2.map(e => e.split(","))
     return statesFiltered
   }
-
-
+  /**
+    * @method getQueue
+    * @desc This function generates the initial queue from the inital state
+    * @version 1.0.0
+    * @param { Object } automataNDFA current automata from the file
+    * @returns { Array } The initial queue
+  */
   function getQueue(automataNDFA) {
     const initalState = automataNDFA.initialState[0]
     const statesA = getTransitionFunction(initalState, 'a')
     const statesB = getTransitionFunction(initalState, 'b')
     const queue = []
     queue.push([initalState])
-    queue.push(statesA)
-    queue.push(statesB)
+    queue.push(statesA || [])
+    queue.push(statesB || [])
     return queue
   }
   /**
      * @method union
      * @desc This function is the unión of the states
      * @version 1.0.0
-     * @param {Array} acumTransitions  the unión of the transitions states
-     * @param {Array} transition result of transition function
-     *@returns {Array} acumTransitions  the unión of the transitions states
-     *@returns {Array} transition result of transition function
+     * @param { Array } statesA  the states A from current state transition
+     * @param { Array } statesB the states B from current state transition
+     *@returns {Array} The union from the params
    */
   function union(statesA = [], statesB = []) {
 
@@ -132,8 +151,8 @@ exports.app = async (nameFile) => {
   * @method getInitialAutomata
   * @desc This function generates the initial automata
   * @version 1.0.0
-  * @param {object} file a txt file already opened
-  * @returns {object} initial automata
+  * @param { Object } file a txt file already opened
+  * @returns { Object } initial automata
   */
   function getInitialAutomata(file) {
     const states = accessToFile(file, 0)
@@ -155,7 +174,7 @@ exports.app = async (nameFile) => {
     * @method getTransitionTable
     * @desc This function generates the transition table
     * @version 1.0.0
-    *@returns {object} transition table
+    *@returns { Object } transition table
   */
   function getTransitionTable() {
     const { states, transitions } = automata
@@ -186,9 +205,9 @@ exports.app = async (nameFile) => {
     * @method getTransitionFunction
     * @desc This function returns the states from each character that we wan to validate
     * @version 1.0.0
-    * @param {string} state current state to find in transition table
-    * @param {string} string current string to find in transition table
-    *@returns {Array} current transition
+    * @param { String } state current state to find in transition table
+    * @param { String } string current string to find in transition table
+    *@returns { Array } current transition
   */
   function getTransitionFunction(state, char) {
     const transitionTable = getTransitionTable(automata)
@@ -210,7 +229,7 @@ exports.app = async (nameFile) => {
    * @method openFile
    * @desc This function generates initial automota from the file
    * @version 1.0.0
-   * @param {text} file file already opened
+   * @param { String } file file already opened
   */
   function openFile(file) {
     const fileOpened = fs.readFileSync(path.join(__dirname, `/files/${file}`), { encoding: 'utf-8' })
@@ -218,41 +237,23 @@ exports.app = async (nameFile) => {
     return fileFormated
   }
 
-
-  /**
-  * @method saveFile
-  * @desc This function generates initial automota from the file
-  * @version 1.0.0
-  * @param {text} file file already opened
-  */
-  function saveFile(data) {
-    console.log(data)
-    try {
-      fs.writeFileSync("dfa.txt", data, { encoding: 'utf-8' })
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-
   /**
     * @method accessToFile
     * @desc This function separate lines
     * @version 1.0.0
-    * @param {Object} File  File to read
-    * @param {Integer} line line of the file
+    * @param { Object } File  File to read
+    * @param { Integer } line line of the file
   */
   function accessToFile(file, line) {
     return file[line].split(',')
   }
 
-
   /**
     * @method cutFile
     * @desc  This function gets the automata from the file
     * @version 1.0.0
-    * @param {Object} File  File to read
-    * @param {Integer} start start of the file
+    * @param { Object } File  File to read
+    * @param { Integer } start start of the file
   */
   function cutFile(file, start) {
     return file.splice(start, file.length)
@@ -264,8 +265,8 @@ exports.app = async (nameFile) => {
    * @method formatTransition
    * @desc This function formats the transitions automata
    * @version 1.0.0
-   * @param {Array} transition result of transition formatted
-   *@returns {Array} transitionFormates  the transition with format
+   * @param { Array } transition result of transition formatted
+   *@returns { Array } transitionFormates  the transition with format
   */
   function formatTransition(transition) {
     const transitionFormated = transition.split(',')
@@ -277,8 +278,8 @@ exports.app = async (nameFile) => {
   * @method complete
   * @desc This function is used to acomplete line terminal
   * @version 1.0.0
-  * @param {Array} commands default values to enter in terminal
-  *@returns {Array} ret chosen values
+  * @param { Array } commands default values to enter in terminal
+  *@returns { Array } ret chosen values
 */
 exports.complete = (commands) => {
   return function (str) {

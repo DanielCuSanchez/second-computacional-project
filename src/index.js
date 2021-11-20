@@ -1,7 +1,7 @@
 /**
   * @author  Daniel Cu Sánchez, Marcela Arcos Caballero
-  * @version 1.0
-  * @since   2021 - 10 - 14
+  * @version 1.1
+  * @since   2021 - 11 - 19
  */
 
 const { app, complete } = require('./app')
@@ -12,9 +12,9 @@ const main = () => {
   console.log('WELCOME'.bgWhite.blue)
   console.log('---------------------')
 
-  // const nameFile = prompt('Put name of the file (USE TABULATOR) = '.yellow, { autocomplete: complete(['test1.txt', 'test2.txt']) })
+  const nameFile = prompt('Put name of the file (USE TABULATOR) = '.yellow, { autocomplete: complete(['test1.txt', 'test2.txt']) })
 
-  app("test1.txt")//This function starts the program with the init file selected
+  app(nameFile)//This function starts the program with the init file selected
 }
 
 main()
