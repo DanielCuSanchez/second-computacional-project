@@ -1,4 +1,4 @@
-#  Integrative Practice
+#  Integrative Practice Part 2
 
 ##### Authors: Marcela Arcos Caballero, Daniel Cu Sánchez.
 
