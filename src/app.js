@@ -15,6 +15,7 @@ exports.app = async (nameFile) => {
   let queue = [...getQueue(automata)]
   //This function inits the process to get DFA
   getDFA([...queue])
+  console.log("End program".bgWhite)
 
 
   /**
@@ -30,7 +31,7 @@ exports.app = async (nameFile) => {
   */
   function getDFA(queue) {
 
-    console.log('INITIAL_QUEUE'.blue, queue)
+    console.log('CURRENT_QUEUE'.blue, queue)
     //Temp variables to check the states
     const statesAnalized = []
     const newStatesToAnalize = []
@@ -67,7 +68,7 @@ exports.app = async (nameFile) => {
 
     let filterToAnalize = filterArray(newStatesToAnalize)
     const exist = existsNewStates(statesAnalized, filterToAnalize)
-    console.log('DICTIONARY'.blue, automataDFA)
+    console.log('NEW_STATES'.blue, automataDFA)
     if (!exist) {
       return automataDFA
     }
